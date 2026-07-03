@@ -1,3 +1,6 @@
+/* Hidden until OxfordHub's hub-nav.js confirms auth and reveals the page. */
+html { visibility: hidden; }
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

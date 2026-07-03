@@ -22,7 +22,7 @@ export default function RecentProjects() {
   const [projects, setProjects] = useState<ProjectDraft[]>([]);
 
   useEffect(() => {
-    setProjects(listProjects().slice(0, 5));
+    (async () => setProjects((await listProjects()).slice(0, 5)))();
   }, []);
 
   if (projects.length === 0) return null;

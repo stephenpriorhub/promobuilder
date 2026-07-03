@@ -82,26 +82,28 @@ export default function ChatInterface() {
     const id = searchParams.get("id");
     if (!id) return;
 
-    const draft = getProject(id);
-    if (!draft) {
-      router.replace("/builder");
-      return;
-    }
+    (async () => {
+      const draft = await getProject(id);
+      if (!draft) {
+        router.replace("/builder");
+        return;
+      }
 
-    setProjectId(draft.id);
-    setMessages(draft.messages);
-    setHeadlinesContent(draft.headlinesContent);
-    setOutlineContent(draft.outlineContent);
-    setVslContent(draft.vslContent);
-    setResearchSources(draft.researchSources);
-    setActiveTab(
-      bestTab(
-        draft.headlinesContent,
-        draft.outlineContent,
-        draft.vslContent,
-        draft.researchSources
-      )
-    );
+      setProjectId(draft.id);
+      setMessages(draft.messages);
+      setHeadlinesContent(draft.headlinesContent);
+      setOutlineContent(draft.outlineContent);
+      setVslContent(draft.vslContent);
+      setResearchSources(draft.researchSources);
+      setActiveTab(
+        bestTab(
+          draft.headlinesContent,
+          draft.outlineContent,
+          draft.vslContent,
+          draft.researchSources
+        )
+      );
+    })();
   });
 
   // ── Auto-save when an AI response completes ────────────────────────────────
@@ -117,7 +119,7 @@ export default function ChatInterface() {
 
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
 
-    saveTimerRef.current = setTimeout(() => {
+    saveTimerRef.current = setTimeout(async () => {
       const existingId = projectId;
       const id = existingId ?? crypto.randomUUID();
 
@@ -126,9 +128,9 @@ export default function ChatInterface() {
         router.replace(`/builder?id=${id}`, { scroll: false });
       }
 
-      const existingDraft = existingId ? getProject(existingId) : null;
+      const existingDraft = existingId ? await getProject(existingId) : null;
 
-      saveProject({
+      await saveProject({
         id,
         name: deriveProjectName(messages),
         createdAt: existingDraft?.createdAt ?? new Date().toISOString(),
@@ -145,9 +147,11 @@ export default function ChatInterface() {
   // ── Auto-save when research cards change (if project already exists) ────────
   useEffect(() => {
     if (!projectId || researchSources.length === 0) return;
-    const existing = getProject(projectId);
-    if (!existing) return;
-    saveProject({ ...existing, researchSources });
+    (async () => {
+      const existing = await getProject(projectId);
+      if (!existing) return;
+      await saveProject({ ...existing, researchSources });
+    })();
   }, [researchSources, projectId]);
 
   // ── Scroll to bottom ────────────────────────────────────────────────────────

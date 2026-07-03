@@ -3,3 +3,6 @@ node_modules/
 .env.local
 .env*.local
 *.tsbuildinfo
+# Runtime project store (server-side; lives on the Railway volume in prod)
+/data/
+.DS_Store

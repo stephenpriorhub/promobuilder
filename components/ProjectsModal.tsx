@@ -37,13 +37,15 @@ export default function ProjectsModal({ currentProjectId, onLoad, onClose }: Pro
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
 
+  const refresh = async () => setProjects(await listProjects());
+
   useEffect(() => {
-    setProjects(listProjects());
+    refresh();
   }, []);
 
-  const handleDelete = (id: string) => {
-    deleteProject(id);
-    setProjects(listProjects());
+  const handleDelete = async (id: string) => {
+    await deleteProject(id);
+    await refresh();
   };
 
   const startRename = (p: ProjectDraft) => {
@@ -51,14 +53,14 @@ export default function ProjectsModal({ currentProjectId, onLoad, onClose }: Pro
     setRenameValue(p.name);
   };
 
-  const commitRename = () => {
+  const commitRename = async () => {
     if (!renamingId || !renameValue.trim()) {
       setRenamingId(null);
       return;
     }
-    renameProject(renamingId, renameValue.trim());
+    await renameProject(renamingId, renameValue.trim());
     setRenamingId(null);
-    setProjects(listProjects());
+    await refresh();
   };
 
   return (

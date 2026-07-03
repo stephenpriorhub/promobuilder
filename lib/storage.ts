@@ -12,54 +12,64 @@ export interface ProjectDraft {
   researchSources: ResearchSource[];
 }
 
-const STORAGE_KEY = "vsl-builder-projects";
+// ── Client-side API wrappers ──────────────────────────────────────────────────
+// Projects now live server-side on the Railway volume (see lib/projects-store.ts
+// + /api/projects), scoped to the signed-in hub user. These wrappers keep the
+// original call signatures the components used, but are now async. The hub
+// session cookie rides along automatically (same-origin fetch).
 
-function readAll(): Record<string, ProjectDraft> {
-  if (typeof window === "undefined") return {};
+export async function listProjects(): Promise<ProjectDraft[]> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    const res = await fetch("/api/projects", { cache: "no-store" });
+    if (!res.ok) return [];
+    const json = (await res.json()) as { projects?: ProjectDraft[] };
+    return json.projects ?? [];
   } catch {
-    return {};
+    return [];
   }
 }
 
-function writeAll(projects: Record<string, ProjectDraft>): void {
-  if (typeof window === "undefined") return;
+export async function getProject(id: string): Promise<ProjectDraft | null> {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(projects));
-  } catch (e) {
-    console.warn("VSL Builder: localStorage write failed", e);
+    const res = await fetch(`/api/projects/${encodeURIComponent(id)}`, { cache: "no-store" });
+    if (!res.ok) return null;
+    const json = (await res.json()) as { project?: ProjectDraft };
+    return json.project ?? null;
+  } catch {
+    return null;
   }
 }
 
-export function listProjects(): ProjectDraft[] {
-  return Object.values(readAll()).sort(
-    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-  );
+export async function saveProject(draft: ProjectDraft): Promise<void> {
+  try {
+    await fetch("/api/projects", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(draft),
+    });
+  } catch (e) {
+    console.warn("Promo Builder: project save failed", e);
+  }
 }
 
-export function getProject(id: string): ProjectDraft | null {
-  return readAll()[id] ?? null;
+export async function deleteProject(id: string): Promise<void> {
+  try {
+    await fetch(`/api/projects/${encodeURIComponent(id)}`, { method: "DELETE" });
+  } catch (e) {
+    console.warn("Promo Builder: project delete failed", e);
+  }
 }
 
-export function saveProject(draft: ProjectDraft): void {
-  const all = readAll();
-  all[draft.id] = { ...draft, updatedAt: new Date().toISOString() };
-  writeAll(all);
-}
-
-export function deleteProject(id: string): void {
-  const all = readAll();
-  delete all[id];
-  writeAll(all);
-}
-
-export function renameProject(id: string, name: string): void {
-  const all = readAll();
-  if (!all[id]) return;
-  all[id] = { ...all[id], name, updatedAt: new Date().toISOString() };
-  writeAll(all);
+export async function renameProject(id: string, name: string): Promise<void> {
+  try {
+    await fetch(`/api/projects/${encodeURIComponent(id)}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name }),
+    });
+  } catch (e) {
+    console.warn("Promo Builder: project rename failed", e);
+  }
 }
 
 const PRESENTER_TOKENS = [

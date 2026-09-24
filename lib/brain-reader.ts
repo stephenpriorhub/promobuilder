@@ -15,6 +15,7 @@
 import fs from "fs";
 import path from "path";
 import { getEnv } from "./env";
+import { detectGuruInText, GURU_ALIASES } from "./detect-guru";
 
 const BRAIN_DIR =
   getEnv("BRAIN_DIR")?.replace(/\/Resources\/.*$/, "") ??
@@ -31,6 +32,7 @@ const GURU_MAP: Record<string, string> = {
   "Bryan Bottarelli": "Bryan Bottarelli.md",
   "Karim Rahemtulla": "Karim Rahemtulla.md",
   "Nate Bear": "Nate Bear.md",
+  "Matt McCall": "Matt McCall.md",
   "Chris Johnson": "Chris Johnson.md",
 };
 const EXPERTS_REL = "Resources/Experts";
@@ -92,15 +94,7 @@ function stripObsidianMarkup(text: string): string {
 
 /** Detect the presenter guru from the conversation text. */
 export function detectGuru(text: string): string | null {
-  const hay = text.toLowerCase();
-  // Match on last name too, since copywriters often just say "Nate" / "Bryan".
-  for (const guru of Object.keys(GURU_MAP)) {
-    const [first, last] = guru.split(" ");
-    if (hay.includes(guru.toLowerCase()) || hay.includes(last.toLowerCase()) || hay.includes(first.toLowerCase())) {
-      return guru;
-    }
-  }
-  return null;
+  return detectGuruInText(text, Object.keys(GURU_MAP), GURU_ALIASES);
 }
 
 /** Detect the MTA service code being sold from the conversation text. */

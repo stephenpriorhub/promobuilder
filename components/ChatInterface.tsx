@@ -455,6 +455,7 @@ export default function ChatInterface() {
                 "Bryan Bottarelli / Ryan as host / PMK",
                 "Nate Bear / solo / PSU front-end",
                 "Karim Rahemtulla / Ryan / TPU back-end",
+                "Matt McCall / solo / XAI front-end",
               ].map((hint) => (
                 <button
                   key={hint}
